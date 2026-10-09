@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка знаний о тезисах</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap">
+<style>
+/* Layout: одна колонка 720px, как экзаменационный лист. Шапка с фамилией, 5 карточек вопросов,
+   необязательная разминка, затем сверка с эталоном и переход к теме занятия. */
+:root {
+  --bg: #EEF2F5;
+  --surface: #FFFFFF;
+  --ink: #13202E;
+  --muted: #56667A;
+  --line: #D3DCE5;
+  --accent: #0B6E75;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DDF0F1;
+  --good: #1B7F4B;
+  --warn: #8F5600;
+  --bad: #B3261E;
+  --font-serif: "Literata", "PT Serif", Georgia, serif;
+  --font-ui: "Golos Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E161E; --surface: #16212B; --ink: #E8EEF4; --muted: #9AAABB; --line: #2A3947;
+    --accent: #52C2C9; --accent-ink: #06262A; --accent-soft: #12353A;
+    --good: #5CD58F; --warn: #E9B35A; --bad: #FF8A80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E161E; --surface: #16212B; --ink: #E8EEF4; --muted: #9AAABB; --line: #2A3947;
+  --accent: #52C2C9; --accent-ink: #06262A; --accent-soft: #12353A;
+  --good: #5CD58F; --warn: #E9B35A; --bad: #FF8A80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 16px; line-height: 1.55; padding-inline: 16px; padding-block: 0 56px; }
+.wrap { max-width: 720px; margin-inline: auto; }
+h1, h2, h3 { font-family: var(--font-serif); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.25; }
+p { margin: 0; }
+
+.head { padding-block: 32px 20px; display: grid; gap: 8px; }
+.head h1 { font-size: clamp(1.7rem, 5vw, 2.3rem); }
+.head p { color: var(--muted); max-width: 60ch; }
+
+.who { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px 16px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+label, .lbl { font-size: 0.9rem; font-weight: 500; }
+.opt { color: var(--muted); font-weight: 400; }
+input[type="text"], textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%; min-width: 0; }
+textarea { resize: vertical; min-height: 7.5rem; line-height: 1.55; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[readonly], textarea[readonly] { opacity: 0.75; }
+.err { color: var(--bad); font-size: 0.875rem; min-height: 0; }
+.err:empty { display: none; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px; margin-block: 8px 4px; display: grid; gap: 6px; }
+.bar-text { font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.segs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.seg { height: 6px; border-radius: 3px; background: var(--line); transition: background 0.2s; }
+.seg.on { background: var(--accent); }
+
+.qlist { display: grid; gap: 16px; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 16px 16px; display: grid; gap: 10px; scroll-margin-top: 80px; }
+.q-top { display: flex; justify-content: space-between; gap: 12px; font-size: 0.85rem; color: var(--muted); }
+.q h2 { font-size: 1.2rem; line-height: 1.4; font-weight: 500; }
+.hint { font-size: 0.875rem; color: var(--muted); }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chips li { background: var(--accent-soft); border-radius: 6px; padding: 6px 10px; font-size: 0.9rem; }
+.count { font-size: 0.8rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+.warm { margin-block-start: 28px; display: grid; gap: 12px; }
+.warm > p { color: var(--muted); font-size: 0.95rem; max-width: 60ch; }
+.warm .q { background: transparent; border-style: dashed; }
+
+.submit { margin-block-start: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+button { font: inherit; cursor: pointer; }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 12px 22px; font-weight: 600; min-height: 44px; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn-quiet { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.status { font-size: 0.95rem; }
+.status.ok { color: var(--good); }
+.status.bad { color: var(--bad); }
+
+.next { margin-block-start: 8px; background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 18px 16px; display: grid; gap: 10px; }
+.next h2 { font-size: 1.3rem; }
+.next ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+
+@media (max-width: 560px) {
+  .who { grid-template-columns: 1fr; }
+  .head { padding-block-start: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .seg { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <h1>Что мы знаем о тезисах</h1>
+    <p>Пять вопросов по прошлому занятию.</p>
+  </header>
+
+  <section class="who" aria-label="Данные студента">
+    <div class="field">
+      <label for="surname">Фамилия и имя</label>
+      <input type="text" id="surname" autocomplete="name" placeholder="Например, Каримова Дилноза">
+      <div class="err" id="err-surname" role="alert"></div>
+    </div>
+  </section>
+
+  <div class="bar" aria-label="Ход ответов">
+    <div class="bar-text" id="bar-text" aria-live="polite">Отвечено 0 из 5</div>
+    <div class="segs" id="segs"></div>
+  </div>
+
+  <main class="qlist" id="qlist"></main>
+
+  <section class="warm">
+    <div class="qlist" id="wlist"></div>
+  </section>
+
+  <div class="submit">
+    <button class="btn" id="send" type="button">Отправить ответы</button>
+    <span class="status" id="status" role="status" aria-live="polite"></span>
+  </div>
+
+  <section class="next" id="next" hidden aria-labelledby="next-title">
+    <h2 id="next-title">Сегодня на занятии</h2>
+    <p>Мы разберём два первых блока введения в тезисах.</p>
+    <ol>
+      <li>Как написать актуальность: от проблемы к причине, почему она важна сейчас, и к тому, чего пока не хватает.</li>
+      <li>Как сделать обзор существующих точек зрения: сгруппировать источники по позициям и показать, где остаётся пробел для вашей работы.</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function () {
+  // Адрес скрипта Google Apps Script, который принимает данные и пишет их в таблицу.
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypHx7JvIANS-u-XK6Uc5jut5Z6_Io8SCRr1EdrPPKvJmse5HVbV85E955_6NNGLuX_pg/exec';
+  var DRAFT_KEY = 'thesis-check-v1';
+
+  // Вопросы и эталоны. Правьте тексты здесь.
+  var Q = [
+    { id: 'q1', topic: 'Что такое тезис',
+      text: 'Что такое тезис? Дайте определение своими словами.',
+      hint: 'Достаточно одного или двух предложений.' },
+    { id: 'q2', topic: 'Понятие тезиса в науке',
+      text: 'Раскройте понятие «тезис» в науке.',
+      hint: 'Объясните, что это такое и как оно используется в научной работе.' },
+    { id: 'q3', topic: 'Значение тезисов в научной работе',
+      text: 'Зачем тезисы нужны в научно-исследовательской деятельности? Назовите не меньше трёх причин.',
+      hint: 'Подумайте и об авторе, и о научном сообществе.' },
+    { id: 'q4', topic: 'Тезисы и соседние жанры',
+      text: 'Чем тезисы отличаются от плана, от реферата и от дипломного проекта?',
+      hint: 'Сравните по трём признакам: что внутри, чей это результат, какой объём.' },
+    { id: 'q5', topic: 'Структура тезисов',
+      text: 'Тезисы состоят из введения, основной части и заключения. Распределите по этим частям пять элементов, перечисленных ниже, и объясните, почему именно так.',
+      hint: 'Напишите для каждой части, какие элементы в неё входят и что в ней происходит.',
+      chips: ['Вступление (актуальность)', 'Цель работы', 'Обзор существующих точек зрения', 'Собственные мысли на тему', 'Заключение и выводы'] }
+  ];
+  var W = [
+    { id: 'w1', topic: 'Актуальность темы', text: 'Что такое актуальность темы и зачем она нужна в тезисах?', hint: 'Своими словами, как вы это понимаете сейчас.' },
+    { id: 'w2', topic: 'Обзор существующих точек зрения', text: 'Как вы думаете, что такое обзор существующих точек зрения?', hint: 'Что в нём должно быть и чего в нём быть не должно?' }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var startedAt = null, locked = false, sentOnce = false;
+
+  function build(list, host, offset, total) {
+    list.forEach(function (q, i) {
+      var art = document.createElement('article'); art.className = 'q'; art.id = 'card-' + q.id;
+      var top = document.createElement('div'); top.className = 'q-top';
+      var a = document.createElement('span'); a.textContent = q.topic;
+      top.append(a);
+      if (total) {
+        var b = document.createElement('span');
+        b.textContent = 'Вопрос ' + (i + 1 + offset) + ' из ' + total;
+        top.append(b);
+      }
+      var h = document.createElement('h2'); var hid = 'h-' + q.id; h.id = hid; h.textContent = q.text;
+      art.append(top, h);
+      if (q.chips) {
+        var ul = document.createElement('ul'); ul.className = 'chips';
+        q.chips.forEach(function (c) { var li = document.createElement('li'); li.textContent = c; ul.append(li); });
+        art.append(ul);
+      }
+      var ta = document.createElement('textarea'); ta.id = q.id; ta.setAttribute('aria-labelledby', hid); ta.rows = 4;
+      var hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = q.hint;
+      var cnt = document.createElement('div'); cnt.className = 'count'; cnt.id = 'cnt-' + q.id; cnt.textContent = '0 слов';
+      var er = document.createElement('div'); er.className = 'err'; er.id = 'err-' + q.id; er.setAttribute('role', 'alert');
+      art.append(hint, ta, cnt, er);
+      host.append(art);
+      ta.addEventListener('input', function () { onInput(q.id); });
+    });
+  }
+
+  function words(s) { var t = s.trim(); return t ? t.split(/\s+/).length : 0; }
+  function val(id) { return $(id).value.trim(); }
+
+  function onInput(id) {
+    if (!startedAt) startedAt = Date.now();
+    var ta = $(id);
+    ta.style.height = 'auto'; ta.style.height = Math.max(ta.scrollHeight + 2, 120) + 'px';
+    var n = words(ta.value);
+    $('cnt-' + id).textContent = n + ' ' + plural(n);
+    $('err-' + id).textContent = '';
+    progress(); saveDraft();
+  }
+  function plural(n) {
+    var m = n % 10, c = n % 100;
+    if (m === 1 && c !== 11) return 'слово';
+    if (m >= 2 && m <= 4 && (c < 12 || c > 14)) return 'слова';
+    return 'слов';
+  }
+  function progress() {
+    var done = 0;
+    Q.forEach(function (q, i) {
+      var on = val(q.id).length >= 10; if (on) done++;
+      $('seg-' + i).className = 'seg' + (on ? ' on' : '');
+    });
+    $('bar-text').textContent = 'Отвечено ' + done + ' из 5';
+  }
+
+  function saveDraft() {
+    try {
+      var d = { surname: $('surname').value, startedAt: startedAt };
+      Q.concat(W).forEach(function (q) { d[q.id] = $(q.id).value; });
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    } catch (e) {}
+  }
+  function loadDraft() {
+    try {
+      var raw = localStorage.getItem(DRAFT_KEY); if (!raw) return;
+      var d = JSON.parse(raw);
+      $('surname').value = d.surname || '';
+      startedAt = d.startedAt || null;
+      Q.concat(W).forEach(function (q) { if (d[q.id]) { $(q.id).value = d[q.id]; onInput(q.id); } });
+    } catch (e) {}
+  }
+
+  function post(payload) {
+    var body = JSON.stringify(payload);
+    function once() {
+      var ctl = new AbortController();
+      var t = setTimeout(function () { ctl.abort(); }, 40000);
+      return fetch(SCRIPT_URL, {
+        method: 'POST', mode: 'no-cors', signal: ctl.signal,
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: body
+      }).finally(function () { clearTimeout(t); });
+    }
+    return once().catch(function () {
+      return new Promise(function (r) { setTimeout(r, 1500); }).then(once);
+    }).catch(function () {
+      var ok = false;
+      try { ok = navigator.sendBeacon(SCRIPT_URL, new Blob([body], { type: 'text/plain;charset=utf-8' })); } catch (e) {}
+      if (!ok) throw new Error('send failed');
+    });
+  }
+
+  function lockForm() {
+    locked = true;
+    document.querySelectorAll('textarea, input[type="text"]').forEach(function (el) { if (true) el.readOnly = true; });
+  }
+
+  function validate() {
+    var ok = true, first = null;
+    $('err-surname').textContent = '';
+    if ($('surname').value.trim().length < 2) {
+      $('err-surname').textContent = 'Введите фамилию и имя, чтобы преподаватель увидел ваши ответы.';
+      ok = false; first = $('surname');
+    }
+    Q.forEach(function (q) {
+      if (val(q.id).length < 10) {
+        $('err-' + q.id).textContent = 'Напишите хотя бы одно предложение.';
+        if (ok) first = $(q.id); ok = false;
+      }
+    });
+    if (first) { first.scrollIntoView({ block: 'center' }); first.focus({ preventScroll: true }); }
+    return ok;
+  }
+
+  function payloadAnswers() {
+    var p = {
+      type: 'answers', timestamp: new Date().toISOString(),
+      surname: $('surname').value.trim(),
+      seconds: startedAt ? Math.round((Date.now() - startedAt) / 1000) : ''
+    };
+    Q.concat(W).forEach(function (q) { p[q.id] = val(q.id); });
+    return p;
+  }
+
+  function onSend() {
+    if (locked || !validate()) return;
+    var btn = $('send'), st = $('status');
+    btn.disabled = true; st.className = 'status'; st.textContent = 'Отправляю…';
+    var p = payloadAnswers();
+    post(p).then(function () {
+      st.className = 'status ok'; st.textContent = 'Ответы отправлены.';
+      btn.textContent = 'Ответы отправлены'; lockForm(); sentOnce = true;
+      showNext();
+    }).catch(function () {
+      st.className = 'status bad';
+      st.textContent = 'Не удалось отправить. Проверьте интернет и нажмите ещё раз.';
+      btn.disabled = false;
+    });
+  }
+
+  function showNext() {
+    if ($('next').hidden === false) return;
+    $('next').hidden = false;
+    $('next').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Старт
+  build(Q, $('qlist'), 0, 5);
+  build(W, $('wlist'), 0, 0);
+  for (var i = 0; i < 5; i++) { var s = document.createElement('div'); s.className = 'seg'; s.id = 'seg-' + i; $('segs').append(s); }
+  $('surname').addEventListener('input', function () { $('err-surname').textContent = ''; saveDraft(); });
+  $('send').addEventListener('click', onSend);
+  loadDraft(); progress();
+})();
+</script>
+
+</body>
+</html>
